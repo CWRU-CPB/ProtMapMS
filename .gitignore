@@ -1,0 +1,9 @@
+/nbproject/
+/build/
+/dist/
+/backup/
+/logs/
+/data/
+/results/
+build.xml
+manifest.mf

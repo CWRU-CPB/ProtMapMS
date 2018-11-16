@@ -1,0 +1,1 @@
+ProtMapMS is a search engine for protein footprinting experiments.
