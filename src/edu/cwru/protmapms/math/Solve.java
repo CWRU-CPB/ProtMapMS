@@ -92,22 +92,4 @@ public class Solve {
         return x;
     }
     
-    /*public static void main(String[] args) {
-        //double[][] Adata = { {3,6,-9}, {2,5,-3}, {-4,1,10}};
-        //double[] bdata = {0,-4,3};
-        double[][] Adata = { {1,799.9,Math.pow(799.9,2)}, {1,800,Math.pow(800,2)}, {1,800.1,Math.pow(800.1,2)}};
-        double[] bdata = {0, 10, -10};
-        
-        Matrix A = new Matrix(Adata);
-        Vector b = new Vector(bdata);
-        
-        try {
-            Vector x = Solve.LU(A,b);
-            System.out.printf("%s\n",x.toString());
-        }
-        catch(Exception e) {
-            e.printStackTrace(System.err);
-        }
-    }*/
-    
 }

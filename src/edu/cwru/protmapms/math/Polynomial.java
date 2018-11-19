@@ -94,27 +94,4 @@ public class Polynomial {
         return fit;
     }
     
-    /*public static void main(String[] args) {
-        //double[] x = {0,1,2,3,4,5,6,7,8,9};
-        double[] y = {0.0, 2670.585205078125, 3225.215576171875, 5486.7138671875, 4689.92578125, 3458.312255859375, 1897.5648193359375};
-        double[] x = {831.6353499151866, 831.6379148053805, 831.6404797074404, 831.6430446213658, 831.6456095471574, 831.6481744848148, 831.6507394343382};
-        
-        x = MathX.shift(x, -1.0*x[0]);
-        //x = MathX.product(x, 1000.0);
-        
-        System.out.printf("x=%s\n",java.util.Arrays.toString(x));
-        System.out.printf("y=%s\n",java.util.Arrays.toString(y));
-
-        double[] fit;
-        
-        try {
-            fit = Polynomial.Quadratic(x, y);
-            System.out.printf("fit=%s\n",java.util.Arrays.toString(fit));
-        }
-        catch(Exception e) {
-            e.printStackTrace(System.err);
-        }
-        
-    }*/
-    
 }
