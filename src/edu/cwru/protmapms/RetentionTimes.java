@@ -100,6 +100,7 @@ public class RetentionTimes extends HashMap<String,HashMap<String,List<Comparabl
     }
     
     public void print() {
+        System.out.printf("Spec\tm/z\t\tRT [Int,\tScore]\n");
         for(String expKey : this.keySet()) {
             for(String mzKey : this.get(expKey).keySet()) {
                 List<ComparableRetentionTime> intervals = this.get(expKey).get(mzKey);
@@ -116,11 +117,21 @@ public class RetentionTimes extends HashMap<String,HashMap<String,List<Comparabl
         TOP:for(ComparableRetentionTime retentionTime : retentionTimes) {
             Double start = retentionTime.getRetentionTime()-widen;
             Double end = retentionTime.getRetentionTime()+widen;
-            for(Interval interval : intervals) {
-                if(start.compareTo(interval.end)  < 0 && end.compareTo(interval.end) > 0)
+            for(int i=0;i<intervals.size();i++) {
+                Interval interval = intervals.get(i);
+                
+                /* If we are adding an interval that starts at the end of the
+                 * previous interval, we expand the previous interval, replace
+                 * it in the list, and jump to outer loop */
+                if((Math.abs(start-interval.end) < 0.0000001 || start.compareTo(interval.end) <= 0) && end.compareTo(interval.end) > 0) {
                     interval.end = end;
-                break TOP;
+                    intervals.set(i, interval);
+                    continue TOP;
+                }
             }
+            
+            /* If the current interval to add did not intersect with any 
+             * existing interval, we append it to the end of the list */
             intervals.add(new Interval(start,end));
         }
         return intervals;
