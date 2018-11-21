@@ -213,7 +213,7 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
      *                        where this peptide was identified.
      * @return 
      */
-    public List<ComparableRetentionTime> getRetentionTime(String spectrumKey, 
+    private List<ComparableRetentionTime> getRetentionTime(String spectrumKey, 
             String mzKey, 
             Map<String,Double> reference, 
             RetentionTimes retentionTimes) {
