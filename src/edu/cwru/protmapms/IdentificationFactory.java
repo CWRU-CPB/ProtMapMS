@@ -103,6 +103,27 @@ public class IdentificationFactory {
         outDir = String.format("results/%d",System.currentTimeMillis());
     }
     
+    public void configure(IdentificationFactoryConfig ifc) {
+        minZ = ifc.getMinCharge();
+        maxZ = ifc.getMaxCharge();
+        maxMissedCleavages=ifc.getMaxMissedCleavages();
+        maxConcurrentModifications=ifc.getMaxConcurrentModifications();
+        ms1ErrPpm=ifc.getMs1ErrorPPM();
+        ms2Err=ifc.getMs2ErrorDa();
+        fromRT=ifc.getMinRT()*60.0;
+        toRT=ifc.getMaxRT()*60.0;
+        minMass=ifc.getMinMass();
+        maxMass=ifc.getMaxMass();
+        proteins = ifc.getProteinDatabase();
+        modifications=ifc.getModificationDatabase();
+        proteaseName=ifc.getProteaseName();
+        outDir = ifc.getOutputDirectory();
+        
+        for(int i=0;i<ifc.nSpectra();i++) {
+            this.addSpectrum(ifc.spectrumFile(i), ifc.spectrumKey(i));
+        }
+    }
+    
     public IdentificationFactory addSpectrum(String file, Double exposureTime) {
         this.spectrumFiles.add(file);
         this.spectrumKeys.add(String.format("%.4f",exposureTime));
@@ -207,6 +228,19 @@ public class IdentificationFactory {
             throw new Exception("Retention time window is not fully specified. Requires a from and to.");
         }
     }
+    
+    public void printConfig() {
+        System.out.printf("Protein Database Size: %d\n",proteins.size());
+        System.out.printf("Protease Name: %s\n",proteaseName);
+        System.out.printf("Charge Range: [%d,%d]\n",minZ,maxZ);
+        System.out.printf("Retention Time Range (seconds): [%.4f,%.4f]\n",fromRT,toRT);
+        System.out.printf("Mass Window: [%.4f,%.4f]\n",minMass,maxMass);
+        System.out.printf("MS2 Error (Da): %.4f\n",ms2Err);
+        System.out.printf("MS1 Error (PPM): %d\n",ms1ErrPpm);
+        System.out.printf("Max Missed Cleavages: %d\n",maxMissedCleavages);
+        System.out.printf("Max Concurrent Modifications: %d\n",maxConcurrentModifications);
+        System.out.printf("Min Score Threshold: %.4f\n",minScore);
+    }
      
     private Identification confirmIdentification(Peptide peptide, double[] precursors, SpectrumFile sf, int scan, double[] theoreticalIons) throws Exception {
         /* Load the scan data and meta data into memory */
@@ -295,6 +329,7 @@ public class IdentificationFactory {
     public FootprintingResult identify() throws Exception {
         /* Validate all parameters have been configured */
         validate();
+        printConfig();
         
         /* Instantiate result container to hold results */
         FootprintingResult result = new FootprintingResult();
@@ -402,14 +437,15 @@ public class IdentificationFactory {
                 new mzXMLInterface());
         ms1e.extract(false);
                
-        /* Output results */
-        //ResultWriter.drawChromatograms(outDir,result,rtp,ms1e,integrationSlack,fromRT,toRT);
+        /* Output result tables */
         ResultWriter.writeIdentificationReport(outDir,result);
         ResultWriter.writePeakAreas(outDir,result,rtp,ms1e,integrationSlack);
-        //ResultWriter.writePeakAreasHTML(outDir, result, rtp, ms1e, integrationSlack);
+        
+        /* Output result objects */
         ResultWriter.writePeakAreasJSON(outDir, result, rtp, ms1e, integrationSlack);
         ResultWriter.writeChromatogramsJSON(outDir, ms1e, rtp);
         ResultWriter.writeIdentificationsJSON(outDir,result);
+        
         return result;
     }
     
