@@ -330,6 +330,9 @@ public class ResultWriter {
                         if(ratio.isNaN()) {
                             fw.write("\"NaN\"");
                         }
+                        else if(ratio.isInfinite()) {
+                            fw.write("\"Inf\"");
+                        }
                         else {
                             fw.write(String.format("%.4f",ratio));
                         }
@@ -338,6 +341,9 @@ public class ResultWriter {
                             Double cRatio = (labeled/(unlabeled+labeled))/lastRatio;
                             if(cRatio.isNaN()) {
                                 fw.write("\"NaN\"");
+                            }
+                            else if(cRatio.isInfinite()) {
+                                fw.write("\"Inf\"");
                             }
                             else {
                                 fw.write(String.format("%.4f",(labeled/(unlabeled+labeled))/lastRatio));
