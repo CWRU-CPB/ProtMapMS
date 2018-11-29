@@ -29,8 +29,6 @@ import edu.cwru.sb4j.http.Sb4jHttpException;
 import edu.cwru.sb4j.http.Sb4jHttpResponse;
 
 import java.io.FileWriter;
-import java.io.FileReader;
-import java.io.BufferedReader;
 
 /**
  *
@@ -43,12 +41,12 @@ public class ConfigureServer extends javax.swing.JFrame {
      */
     public ConfigureServer() {
         initComponents();
-        
+        saveButton.setEnabled(false);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("server.config"));
-            String[] locationTokens = br.readLine().split("=");
-            locationTF.setText(locationTokens[1]);
-            br.close();
+            ServerConfig sc = ServerConfig.loadServerConfig("server.config");
+            if(sc == null) return;
+            locationInput.setText(sc.getLocation());
+            pinInput.setText(sc.getPin());
         }
         catch(Exception e) {
             
@@ -65,34 +63,39 @@ public class ConfigureServer extends javax.swing.JFrame {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
-        locationTF = new javax.swing.JTextField();
-        testB = new javax.swing.JButton();
-        saveB = new javax.swing.JButton();
+        locationInput = new javax.swing.JTextField();
+        testButton = new javax.swing.JButton();
+        saveButton = new javax.swing.JButton();
         statusL = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        pinInput = new javax.swing.JTextField();
 
         setTitle("ProtMapMS - Server Configuration");
+        setResizable(false);
 
         jLabel1.setText("Location");
 
-        testB.setText("Test");
-        testB.addActionListener(new java.awt.event.ActionListener() {
+        testButton.setText("Test");
+        testButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                testBActionPerformed(evt);
+                testButtonActionPerformed(evt);
             }
         });
 
-        saveB.setText("Save");
-        saveB.addActionListener(new java.awt.event.ActionListener() {
+        saveButton.setText("Save");
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveBActionPerformed(evt);
+                saveButtonActionPerformed(evt);
             }
         });
 
         statusL.setText("     ");
 
         jLabel2.setFont(new java.awt.Font("Ubuntu", 2, 15)); // NOI18N
-        jLabel2.setText("e.g. http://192.168.1.104:80/prott/");
+        jLabel2.setText("e.g. http://192.168.1.104:80/protmap/");
+
+        jLabel3.setText("PIN");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -102,15 +105,18 @@ public class ConfigureServer extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(testB, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(testButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(locationTF)
+                    .addComponent(locationInput)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(saveB)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(pinInput, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -119,13 +125,17 @@ public class ConfigureServer extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(locationTF, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(locationInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(testB)
-                    .addComponent(saveB))
+                    .addComponent(jLabel3)
+                    .addComponent(pinInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(24, 24, 24)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(testButton)
+                    .addComponent(saveButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(statusL))
         );
@@ -133,10 +143,18 @@ public class ConfigureServer extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void testBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testBActionPerformed
-        String url = locationTF.getText();
+    private void testButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButtonActionPerformed
+        String url = locationInput.getText();
+        String pin = pinInput.getText();
         if(url.isEmpty()) {
             statusL.setText("Test failed: must specify a location");
+            saveButton.setEnabled(false);
+            return;
+        }
+        
+        if(pin.isEmpty()) {
+            statusL.setText("Test failed: must specify a PIN");
+            saveButton.setEnabled(false);
             return;
         }
         
@@ -145,7 +163,7 @@ public class ConfigureServer extends javax.swing.JFrame {
         }
         url += "index.php";
         
-        String testLocation = url+"?test=true";
+        String testLocation = url+"?test=true&pin="+pin;
         
         try {
             Sb4jHttpClient client = new Sb4jHttpClient();
@@ -154,32 +172,30 @@ public class ConfigureServer extends javax.swing.JFrame {
             if(!response.getBody().equals("1\n")) {
                 statusL.setText("Test failed: server response does not match expected");
                 System.out.printf("response=\"%s\"\n",response.getBody());
+                saveButton.setEnabled(false);
                 return;
             }
             
             /* Test PUT works, as it requires permissions ot be set correctly 
              * on the server */
-            String putTest=url+"?project=A&file=B.js";
+            String putTest=url+"?project=A&file=B.js&pin="+pin;
             String testToken = String.format("prott%d",System.currentTimeMillis());
             client.put(putTest,testToken);
-            response = client.get(url+"?project=A&file=B.js");
+            response = client.get(url+"?project=A&file=B.js&pin="+pin);
             
             if(!testToken.equals(response.getBody())) {
                 statusL.setText("Test failed: server response does not match PUT test");
                 System.out.printf("response=\"%s\" expecting %s\n",response.getBody(),testToken);
+                saveButton.setEnabled(false);
                 return;
             }
             
-            /* Test DELETE */
-            response = client.get(url+"?delete=A");
-            if(!response.getBody().equals("1\n")) {
-                statusL.setText("Test failed: server could not delete test file");
-                System.out.printf("response=\"%s\"\n",response.getBody());
-                return;
-            }
-            
+            /* DELETE Test file */
+            response = client.get(url+"?delete=A&pin="+pin);
+
             /* All OK */
             statusL.setText("Test OK: Click \"Save\" to set this as the destination server");
+            saveButton.setEnabled(true);
         }
         catch(Sb4jHttpException e) {
             statusL.setText("Test failed: Response status="+e.getStatus()+", message="+e.getMessage());
@@ -187,25 +203,30 @@ public class ConfigureServer extends javax.swing.JFrame {
         catch(Exception e) {
             statusL.setText("Test failed: "+e.toString());
         }
-    }//GEN-LAST:event_testBActionPerformed
+    }//GEN-LAST:event_testButtonActionPerformed
 
-    private void saveBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveBActionPerformed
-        String url = locationTF.getText();
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+        String url = locationInput.getText();
+        String pin = pinInput.getText();
         if(url.isEmpty()) {
             statusL.setText("Test failed: must specify a location");
             return;
         }
         
+        if(pin.isEmpty()) {
+            statusL.setText("Test failed: must specify a PIN");
+            return;
+        }
+        
         try {
-            FileWriter fw = new FileWriter("server.config");
-            fw.write(String.format("location=%s",url));
-            fw.close();
+            ServerConfig sc = new ServerConfig().setLocation(url).setPin(pin);
+            ServerConfig.saveServerConfig(sc, "server.config");
             statusL.setText("Save OK");
         }
         catch(Exception e) {
             statusL.setText("Save failed: could not save configuration");
         }
-    }//GEN-LAST:event_saveBActionPerformed
+    }//GEN-LAST:event_saveButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -246,9 +267,11 @@ public class ConfigureServer extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JTextField locationTF;
-    private javax.swing.JButton saveB;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JTextField locationInput;
+    private javax.swing.JTextField pinInput;
+    private javax.swing.JButton saveButton;
     private javax.swing.JLabel statusL;
-    private javax.swing.JButton testB;
+    private javax.swing.JButton testButton;
     // End of variables declaration//GEN-END:variables
 }
