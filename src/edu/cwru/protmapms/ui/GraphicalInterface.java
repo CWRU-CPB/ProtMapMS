@@ -43,7 +43,8 @@ import edu.cwru.sb4j.http.Sb4jHttpClient;
  * @author sean-m
  */
 public class GraphicalInterface extends javax.swing.JFrame {
-            
+    private String lastDir = ".";
+    
     private class ProteinSequenceDatabaseFileChooserFilter extends FileFilter {
 
         @Override
@@ -498,10 +499,11 @@ public class GraphicalInterface extends javax.swing.JFrame {
         JFileChooser fc = new JFileChooser();
         fc.setFileFilter(new SpectrumFileChooserFilter());
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setCurrentDirectory(new File("."));
+        fc.setCurrentDirectory(new File(lastDir));
         fc.setMultiSelectionEnabled(true);
         int result = fc.showOpenDialog(this);
         if(result == JFileChooser.APPROVE_OPTION) {
+            lastDir = fc.getSelectedFiles()[0].getParent();
             for(File file : fc.getSelectedFiles()) {
                 String path = file.getPath();
                 DefaultListModel model = (DefaultListModel)spectrumFileList.getModel();
@@ -516,11 +518,12 @@ public class GraphicalInterface extends javax.swing.JFrame {
         JFileChooser fc = new JFileChooser();
         fc.setFileFilter(new ProteinSequenceDatabaseFileChooserFilter());
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setCurrentDirectory(new File("."));
+        fc.setCurrentDirectory(new File(lastDir));
         
         int result = fc.showOpenDialog(this);
         if(result == JFileChooser.APPROVE_OPTION) {
             File selected = fc.getSelectedFile();
+            lastDir = selected.getParent();
             fastaFilePathLabel.setText(selected.getPath());
         }
     }//GEN-LAST:event_fastaChooseButtonActionPerformed
@@ -529,11 +532,12 @@ public class GraphicalInterface extends javax.swing.JFrame {
         JFileChooser fc = new JFileChooser();
         fc.setFileFilter(new ModificationSiteDatabaseFileChooserFilter());
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setCurrentDirectory(new File("."));
+        fc.setCurrentDirectory(new File(lastDir));
         
         int result = fc.showOpenDialog(this);
         if(result == JFileChooser.APPROVE_OPTION) {
             File selected = fc.getSelectedFile();
+            lastDir = selected.getParent();
             modificationFilePathLabel.setText(selected.getPath());
         }
     }//GEN-LAST:event_modificationsChooseButtonActionPerformed
