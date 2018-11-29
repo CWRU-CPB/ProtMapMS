@@ -118,8 +118,8 @@ public class SortedArraysAlignerTest {
     }
     
     @Test
-    public void testGetClosestDependentPairs() throws Exception {
-        /* Expect                  *   *                 */
+    public void testGetInRangePairs() throws Exception {
+        /* Expect              *   *   *   *   *          */
         double[] X = {1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9};
         double[] Y = {1.35,1.6};
         int[] exp = {2,3,4,5,6};
