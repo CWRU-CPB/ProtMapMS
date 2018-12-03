@@ -43,7 +43,7 @@ public class ResultWriter {
         if(!outDirFile.exists())
             outDirFile.mkdirs();
         
-        FileWriter fw = new FileWriter(outDir+"/indentifications.tdv");
+        FileWriter fw = new FileWriter(outDir+"/identifications.tdv");
         fw.write("Accession\tPeptideSequence\tPeptideStart\tPeptideEnd\tSpectrumKey\tm/z\tZ\tRT\tScan\tScore\tModifications\tLabeling?\n");
         for(String accession : result.getProteinAccessions()) {
             ProteinResult protResult = result.getProteinResult(accession);
