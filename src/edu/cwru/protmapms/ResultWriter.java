@@ -29,6 +29,7 @@ import edu.cwru.protmapms.result.SpectrumResult;
 import java.io.FileWriter;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Writes results to spreadsheet and JSON formats.
@@ -163,7 +164,8 @@ public class ResultWriter {
             FootprintingResult result, 
             RetentionTimeDatabase rtp, 
             MS1ExtractWithGaussianConfirmation ms1e,
-            Double integrationSlack) throws Exception {
+            Double integrationSlack,
+            Map<String,String> spectrumFileMap) throws Exception {
         
         /* Create output directory */
         File outDirFile = new File(outDir);
@@ -198,7 +200,7 @@ public class ResultWriter {
                                     peptideKey,
                                     peptide.start()+1,
                                     peptide.end()+1,
-                                    spectrumKey,
+                                    spectrumFileMap.get(spectrumKey),
                                     labeled,
                                     unlabeled,
                                     labeled/(unlabeled+labeled)));
@@ -208,7 +210,7 @@ public class ResultWriter {
                                     peptideKey,
                                     peptide.start()+1,
                                     peptide.end()+1,
-                                    spectrumKey,
+                                    spectrumFileMap.get(spectrumKey),
                                     labeled,
                                     unlabeled,
                                     labeled/(unlabeled+labeled),

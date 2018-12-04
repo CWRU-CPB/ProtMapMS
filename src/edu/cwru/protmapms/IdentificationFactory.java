@@ -38,6 +38,8 @@ import edu.cwru.protmapms.spectra.Scan;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -242,6 +244,14 @@ public class IdentificationFactory {
         System.out.printf("Min Score Threshold: %.4f\n",minScore);
     }
      
+    public Map<String,String> getSpectrumFileMap() {
+        Map<String,String> r = new HashMap<>();
+        for(int i=0;i<spectrumFiles.size();i++) {
+            r.put(spectrumKeys.get(i),spectrumFiles.get(i));
+        }
+        return r;
+    }
+    
     private Identification confirmIdentification(Peptide peptide, double[] precursors, SpectrumFile sf, int scan, double[] theoreticalIons) throws Exception {
         /* Load the scan data and meta data into memory */
         Peaks peaks = sf.getScanPeaks(scan);
@@ -439,7 +449,7 @@ public class IdentificationFactory {
                
         /* Output result tables */
         ResultWriter.writeIdentificationReport(outDir,result);
-        ResultWriter.writePeakAreas(outDir,result,rtp,ms1e,integrationSlack);
+        ResultWriter.writePeakAreas(outDir,result,rtp,ms1e,integrationSlack,this.getSpectrumFileMap());
         
         /* Output result objects */
         ResultWriter.writePeakAreasJSON(outDir, result, rtp, ms1e, integrationSlack);
