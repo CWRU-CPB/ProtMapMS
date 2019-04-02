@@ -86,7 +86,7 @@ public class FastaTest {
     @Test
     public void testGetSequences_Uniprot_Enforce_With_Gene_Symbol() throws Exception {
         Fasta f = new Fasta("test-data/valid-uniprot.fasta");
-        assertEquals("FGHI",f.getSequence("Q96S45 | TP53"));
+        assertEquals("FGHI",f.getSequence("Q96S45_TP53"));
     }
 
     @Test
