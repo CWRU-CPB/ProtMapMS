@@ -52,6 +52,17 @@ public class IonFactory {
         return m + 18.01056470;
     }
     
+    /**
+     * Provides an isotope offset based on the argument ion mass. This was 
+     * expert knowledge applied in a prototype, and its intention is to focus
+     * on different isotopes as ions become heavier. It could use review by 
+     * someone familiar with how isotope abundance varies with ion mass.
+     * 
+     * @param m Ion mass
+     * 
+     * @return Offset that when added to ion mass will equal the mass of the
+     *         most abundant isotope (I think)
+     */
     public static double isotopeOffset(double m) {
         if(m < 1800) {
             return 0.0;
@@ -152,12 +163,7 @@ public class IonFactory {
             precursors[4] =mass-18.0106+1.003355 + mass_offset;
             precursors[5] =mass-17.0265+1.003355 + mass_offset;
         }
-        else {
-       
-            /*
-              START_BLOCK: Taken from genmzbyions2.m in original code base
-            */
-        
+        else {       
             /* First isotope */
             precursors[0]=((mass+mass_offset+z*1.007825)/z);// + mass_offset/z;
             precursors[1]=((mass+mass_offset-18.0106+z*1.007825)/z);// + mass_offset/z;
@@ -167,11 +173,6 @@ public class IonFactory {
             precursors[3] =((mass+mass_offset+z*1.007825+1.003355)/z);// + mass_offset/z;
             precursors[4] =((mass+mass_offset-18.0106+z*1.007825+1.003355)/z);// + mass_offset/z;
             precursors[5] =((mass+mass_offset-17.0265+z*1.007825+1.003355)/z); // + mass_offset/z;
-        
-            /*
-              END_BLOCK
-            */
-
         }
 
         return precursors;

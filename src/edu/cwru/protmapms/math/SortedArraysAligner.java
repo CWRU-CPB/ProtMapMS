@@ -30,98 +30,26 @@ package edu.cwru.protmapms.math;
  */
 public class SortedArraysAligner {
 
-    public static int[][] alignClosestPairs(double[] X, double[] Y, double maxDistance) throws Exception {
-        /* Initialize an array matches to NaNs, which will be filled in for
-         * each match to value X[j] := matches[j]=Y[i] if a match is made */
-        int[] matches = new int[X.length];
-        for(int i=0;i<matches.length;i++) {
-            matches[i] = -1;
-        }
-        
-        int lastMatch=0, nMatches=0;
-        double d1,d2,d3,d4;
-        for(int j=0;j<Y.length;j++) {
-            /* Make sure the array is sorted */
-            if(j<Y.length-1 && Y[j] > Y[j+1])
-                throw new Exception("Argument arrays are not sorted");
-            
-            for(int i=lastMatch;i<X.length;i++) {
-                /* Make sure argument arrays are sorted */
-                if(i<X.length-1 && X[i] > X[i+1])
-                    throw new Exception("Argument arrays are not sorted");
-                
-                d1 = Math.abs(Y[j]-X[i]);
-                
-                /* Last match was made far away from this value, so fast-forward
-                 * until we get close to this value */
-                if(Y[j]-X[i] > 0 && d1 > maxDistance) continue;
-                
-                /* We've have exceeded the current value to match by more than
-                 * the window, so stop searching */
-                else if(Y[j]-X[i] < 0 && d1 > maxDistance) break;
-                
-                /* The algorithm is simpler if the lists have last value +Inf,
-                 * but modifying the argument arrays would require cloneing them
-                 * and this block of conditions makes the outcome equivalent
-                 * without the added overhead */
-                if(j == Y.length-1 && i==X.length-1) {
-                    d2 = Double.POSITIVE_INFINITY;
-                    d4 = Double.POSITIVE_INFINITY;
-                    d3 = Double.POSITIVE_INFINITY;
-                }
-                else if(j == Y.length-1) {
-                    d2 = Math.abs(Y[j]-X[i+1]);
-                    d4 = Double.POSITIVE_INFINITY;
-                    d3 = Double.POSITIVE_INFINITY;
-                }
-                else if(i == X.length-1) {
-                    d3 = Math.abs(Y[j+1]-X[i]);
-                    d4 = Double.POSITIVE_INFINITY;
-                    d2 = Double.POSITIVE_INFINITY;
-                }
-                else {
-                    d2 = Math.abs(Y[j]-X[i+1]);
-                    d3 = Math.abs(Y[j+1]-X[i]);
-                    d4 = Math.abs(Y[j+1]-X[i+1]);
-                }
-                
-                /* Cannot improve this match, and it is better than matching
-                 * x_{j+1} to this y */
-                if(d1 <= d2 && (d1 <= d3 || d4 <= d3)) {
-                    matches[i] = j;
-                    lastMatch=i+1;
-                    nMatches++;
-                    break;
-                }
-                
-                /* There is a better match to y_{j+1}, but it is closer to 
-                 * x_{j+1}, so this is the best that can be done */
-                else if(d4 <= d2 && d4 <= d3) {
-                    matches[i] = j;
-                    lastMatch=i+1;
-                    nMatches++;
-                    break;
-                }
-            }      
-        }
-             
-        /* Extract the alignment for those values in Y and X that were 
-         * matched */
-        int[][] pairs = new int[2][nMatches];
-        int j=0;
-        for(int i=0;i<matches.length;i++) {
-            if(matches[i] != -1) {
-                pairs[0][j]=i;
-                pairs[1][j]=matches[i];
-                j++;
-            }
-        }
-        return pairs;
-    }
-   
-    public static ArrayAlignment alignClosestDependent(double[] X, double[] Xd, double[] Y, double maxDistance) throws Exception {
-        /* Initialize an array matches to NaNs, which will be filled in for
-         * each match to value X[j] := matches[j]=Y[i] if a match is made */
+    /**
+     * Aligns values X[i] to a best value Y[j] using three criteria:
+     * <ol>
+     * <li>abs(X[i]-Y[j]) is less than maxDifference</li>
+     * <li>X[i] is closer to Y[j] than to Y[j+1]</li>
+     * <li>The dependent value Xd[i] is greater than Xd[i+1]</li>
+     * </ol>
+     * 
+     * The values stored in X and Y must be in ascending order.
+     * 
+     * @param X Values to align to Y
+     * @param Xd Dependent variable corresponding to each X[i]
+     * @param Y Values to be aligned to
+     * @param maxDifference Maximum difference between X and Y that is allowed
+     * @return The aligned arrays
+     * @throws Exception If either X or Y is not in ascending order
+     */
+    public static ArrayAlignment alignClosestDependent(double[] X, double[] Xd, double[] Y, double maxDifference) throws Exception {
+        /* Initialize an array of matches to -1, which will be filled in with an
+         * index of array Y if a match is made*/
         int[] matches = new int[X.length];
         for(int i=0;i<matches.length;i++) {
             matches[i] = -1;
@@ -141,20 +69,25 @@ public class SortedArraysAligner {
                 if(i<X.length-1 && X[i] > X[i+1])
                     throw new Exception("Argument array X is not sorted");
                 
+                /* d1 is how close the current theoretcial m/z ion Y[j] is to
+                 * the experimental m/z ion X[i] */
                 d1 = Math.abs(Y[j]-X[i]);
                 
                 /* Last match was made far away from this value, so fast-forward
-                 * until we get close to this value */
-                if(Y[j]-X[i] > 0 && d1 > maxDistance) continue;
+                 * until we are within maxDifference */
+                if(Y[j]-X[i] > 0 && d1 > maxDifference) continue;
                 
                 /* We have exceeded the current value to match by more than
-                 * the window, so stop searching */
-                else if(Y[j]-X[i] < 0 && d1 > maxDistance) break;
+                 * maxDifference, so stop searching */
+                else if(Y[j]-X[i] < 0 && d1 > maxDifference) break;
                 
-                /* The algorithm is simpler if we append +Inf to each list, but
-                 * modifying the argument arrays would require cloning them
-                 * and this block of conditions makes the outcome equivalent
-                 * without the added overhead */
+                /* d3 is the distance between the NEXT theoretical ion Y[j+1]
+                 * and the current experimental ion X[i]. We compute this 
+                 * because the arrays are sorted, so if the experimental ion
+                 * is closer to the next theoretical ion, a better match for the
+                 * current theoretical ion cannot be made.
+                 *
+                 * If the current theoretical ion is the last, then d3 is Inf */
                 if(j == Y.length-1) {
                     d3 = Double.POSITIVE_INFINITY;
                 }
@@ -163,13 +96,15 @@ public class SortedArraysAligner {
                 }
                 
                 /* We consider everything in the window, up to the values that
-                 * are closer to the next x value */
+                 * are closer to the next X ion */
                 if(d1 <= d3) {
                     /* Of the values that satisfy the proximity requirements, 
                      * select the candidate with the greatest dependent variable
-                     * value */
+                     * value.
+                     *
+                     * This selects the experimental ion with the greatest
+                     * intensity that matches the theoretical ion */
                     if(bestCandidate == -1 || Xd[i] > Xd[bestCandidate]) {
-                        //System.out.printf("Updating closest match to %.2f to %.2f\n",X[i],Y[j]);
                         bestCandidate = i;
                     }
                 }
@@ -197,6 +132,15 @@ public class SortedArraysAligner {
         return alignment;
     }
     
+    /**
+     * Identify elements Y[j] such that for some i, abs(X[i]-Y[j]) is less than
+     * or equal to a threshold value.
+     * @param X Values to match
+     * @param Y Value to match
+     * @param maxDistance Maximum difference to be considered while matching
+     * @return Indices i,j of matching pairs between X and Y
+     * @throws Exception if X or Y is not in ascending order
+     */
     public static int[][] getInRangePairs(double[] X, double[] Y, double maxDistance) throws Exception {
         /* Initialize an array matches to -1, which will be filled in for
          * each match to value X[j] := matches[j]=Y[i] if a match is made */
@@ -232,7 +176,6 @@ public class SortedArraysAligner {
         for(int i=0;i<matches.length;i++) {
             if(matches[i] != -1) nMatches++;
         }
-        //System.out.printf("%d matches\n",nMatches);
              
         /* Extract the alignment for those values in Y and X that were 
          * matched */
@@ -248,6 +191,12 @@ public class SortedArraysAligner {
         return pairs;
     }
     
+    /**
+     * Utility method to print matched pairs.
+     * @param pairs Pairs computed by #getInRangePairs
+     * @param x Data X passed to #getInRangePairs
+     * @param y Data Y passed to #getInRangePairs
+     */
     public static void printPairs(int[][] pairs, double[] x, double[] y) {
         System.out.printf("Pair\tX\tY\n");
         for(int i=0;i<pairs[0].length;i++) {

@@ -63,11 +63,11 @@ public class SpectrumResult {
         Integer z = identification.getCharge();
         Double mz = identification.getPrecursorMz();
         Double mie = (mz*z)-(z*Constants.MASS_HYDROGEN);
-        String mzKey = String.format("%.6f",mie);
-        if(!map.containsKey(mzKey)) {
-            map.put(mzKey,new ArrayList<>());
+        String monoIsotpoicMassKey = String.format("%.6f",mie);
+        if(!map.containsKey(monoIsotpoicMassKey)) {
+            map.put(monoIsotpoicMassKey,new ArrayList<>());
         }
-        map.get(mzKey).add(identification);
+        map.get(monoIsotpoicMassKey).add(identification);
     }
     
     public void addIdentification(Identification identification) {

@@ -37,7 +37,14 @@ import java.util.Map;
  * @author Sean Maxwell
  */
 public class ResultWriter {
-        public static void writeIdentificationReport(String outDir, FootprintingResult result) throws Exception {
+    /**
+     * Writes tab-delimited information about each peptide identification deemed 
+     * significant to file. 
+     * @param outDir The directory where the result should be written
+     * @param result The result to write to file
+     * @throws Exception if an underlying operation throws an exception
+     */
+    public static void writeIdentificationReport(String outDir, FootprintingResult result) throws Exception {
         
         /* Create output directory */
         File outDirFile = new File(outDir);
@@ -95,7 +102,18 @@ public class ResultWriter {
         }
         fw.close();
     }
-        
+    
+    /**
+     * Writes JSON format information about each peptide identification deemed 
+     * significant to file. The JSON object is hierarchically organized as
+     * protein id =&gt; peptide sequence =&gt; spectrum key =&gt; mono-isotopic 
+     * mass =&gt; [identifications]
+     * where the identifications are JSON returned by the toJSON() method of
+     * each Identification object.
+     * @param outDir The directory where the result should be written
+     * @param result The result to write to file
+     * @throws Exception if an underlying operation throws an exception
+     */
     public static void writeIdentificationsJSON(String outDir, FootprintingResult result) throws Exception {
         
         /* Create output directory */
@@ -160,6 +178,21 @@ public class ResultWriter {
         fw.close();
     }
     
+    /**
+     * Writes peak area information for each peptide across all spectra. This 
+     * includes raw labeled/unlabeled areas, the percentage of the total area
+     * extracted that is labeled and the ratio of the percent labeled in 
+     * spectrum one versus spectrum 2.
+     * @param outDir Directory where results should be written
+     * @param result The result to write to file
+     * @param rtp The database of retention times of peptides in the result
+     * @param ms1e Extracted chromatograms of peptides in result
+     * @param integrationSlack An interval to expand each retention time by when
+     *                         constructing the integration intervals from 
+     *                         retention times
+     * @param spectrumFileMap A map of spectrum keys to spectrum file names
+     * @throws Exception If an underlying operation throws an exception
+     */
     public static void writePeakAreas(String outDir,
             FootprintingResult result, 
             RetentionTimeDatabase rtp, 
@@ -223,6 +256,42 @@ public class ResultWriter {
         fw.close();
     }
     
+    /**
+     * Writes peak area information for each peptide across all spectra in JSON
+     * format. The JSON is hierarchically organized as 
+     * protein id =&gt; peptide sequence =&gt; spectrum key =&gt; Map
+     * where each Map contains keys:
+     * <ul>
+     * <li>protein id (accession)</li>
+     * <li>peptide (peptide sequence)</li>
+     * <li>p_start (the start index of the peptide within the full protein sequence)</li>
+     * <li>p_end (the end index of the peptide within the full protein sequence)</li>
+     * <li>spectrum (the spectrum file id)</li>
+     * <li>labeled (the raw peak area labeled)</li>
+     * <li>unlabeled (the raw peak area unlabeled)</li>
+     * <li>ratio (the ration of labeled/unlabeled)</li>
+     * <li>c-ratio (the ratio from spectrum 2 divided by the ratio from spectrum 1)</li>
+     * <li>species (a Map of m/z values to attributes for all different forms of the
+     *  peptide that were identified)</li>
+     * </ul>
+     * and each m/z key in the species Map points to a map of attributes with
+     * keys:
+     * <ul>
+     * <li>z (charge in m/z)</li>
+     * <li>massOffset (the total mass of all modifications)</li>
+     * <li>labeling (boolean indicating the modifications are considered labeling)</li>
+     * <li>rti (an array of [start,end] retention time intervals)</li>
+     * </ul>
+     * 
+     * @param outDir Directory where results should be written
+     * @param result The result to write to file
+     * @param rtp The database of retention times of peptides in the result
+     * @param ms1e Extracted chromatograms of peptides in result
+     * @param integrationSlack An interval to expand each retention time by when
+     *                         constructing the integration intervals from 
+     *                         retention times
+     * @throws Exception If an underlying operation throws an exception
+     */
     public static void writePeakAreasJSON(String outDir,
             FootprintingResult result, 
             RetentionTimeDatabase rtp, 

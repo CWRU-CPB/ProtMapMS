@@ -112,7 +112,7 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
     }
             
     /* Find a peptide species that is identified across the most number of 
-     * spectra and break ties using the median correlation of the 
+     * spectra and break ties using the median intensity of the 
      * identifications to prioritize species with more significant 
      * identifications 
      */
@@ -133,15 +133,24 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
                 Peptide peptide = pr.getPeptide(peptideSequence);
                 PeptideResult pepResult = pr.getPeptideResult(peptide);
                                    
-                for(String exposureTime : pepResult.getSpectrumKeys()) {
-                    SpectrumResult sr = pepResult.getSpectrumResult(exposureTime);
+                for(String spectrumKey : pepResult.getSpectrumKeys()) {
+                    SpectrumResult sr = pepResult.getSpectrumResult(spectrumKey);
 
-                    /*
-                     * Iterate over un-labeled identifications only 
-                     */
+                    /* Iterate over un-labeled identifications only. There can
+                     * be multiple if the analysis includes variable 
+                     * modifications that are non-labeling. */
                     for(String miKey : sr.getUnlabeledKeys()) {
-                        
+                        /* Iterate over the identification made for this peptide
+                         * species */
                         for(Identification identification : sr.getUnlabeledIdentification(miKey)) {
+                            /* Append the MI mass key to the peptide sequence to
+                             * distinguish different species. This would 
+                             * combine cases like PE*PTIDE and PEPTIDE* (cases
+                             * where E is modified singly in different 
+                             * identifications.
+                             *
+                             * @TODO: Is this a problem?
+                             */
                             String speciesKey = peptide.sequence+"_"+miKey;
                             if(!hits.containsKey(speciesKey)) {
                                 totalIntensity.put(speciesKey, new ArrayList<>());
@@ -150,7 +159,7 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
                             }
 
 
-                            hits.get(speciesKey).add(exposureTime);
+                            hits.get(speciesKey).add(spectrumKey);
                             totalIntensity.get(speciesKey).add(identification.getPrecursorIntensity());
                             totalIdentifications.get(speciesKey).add(identification);
                         }
@@ -165,14 +174,12 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
         }
         
         /* Identify the unlabeled peptide species that was identified in the
-         * most spectra, breaking ties using the median correlation values of
+         * most spectra, breaking ties using the median intensity values of
          * candidate peptide species */
         Integer maxHits = 0;
         Double minIntensity = Double.MIN_VALUE;
         String bestSpecies = "";
         for(String speciesKey : hits.keySet()) {
-            //Double medCorr = Quantize.median(totalCorrelation.get(speciesKey));
-            //Double rtVariance = FootprintingResult.rtVariance(totalIdentifications.get(speciesKey));
             Double medIntensity = Quantize.median(totalIntensity.get(speciesKey));
             Integer hitCount = hits.get(speciesKey).size();
             
@@ -208,7 +215,7 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
      * @param spectrumKey The spectrum key for the spectrum under consideration
      * @param mzKey The m/z value key of the peptide species under consideration
      * @param reference The reference retention times in each spectrum (keyed on
-     *                  the values exposureTime takes)
+     *                  spectrum id)
      * @param retentionTimes The retention time intervals across all spectra 
      *                        where this peptide was identified.
      * @return 
@@ -237,9 +244,9 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
         return retentionTimeValues;
     }
     
-    public RetentionTimeDatabase getRetentionTimeDatabase(RetentionTimes reference) throws Exception {
-        HashMap<String,RetentionTimes> retentionTimeIntervals = new HashMap<>();
-        Set<String> exposureTimes = new HashSet<>();
+    public RetentionTimeDatabase getRetentionTimeDatabase(RetentionTimes referenceRetentionTimes) throws Exception {
+        HashMap<String,RetentionTimes> peptideRetentionTimes = new HashMap<>();
+        Set<String> spectrumKeys = new HashSet<>();
         Set<String> peptideSequences = new HashSet<>();
         HashMap<String,HashMap<String,Set<Integer>>> chargeStates = new HashMap<>();
         HashMap<String,Set<String>> monoIsotpoicMasses = new HashMap<>();
@@ -247,7 +254,7 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
         HashMap<String,HashMap<String,Set<Integer>>> massOffsets = new HashMap<>();
         HashMap<String,Boolean> hasUnlabeled = new HashMap<>();
         HashMap<String,Boolean> hasLabeled = new HashMap<>();
-        Map<String,Double> referenceRt = reference.getMzMap(reference.referenceMz);
+        Map<String,Double> referenceRt = referenceRetentionTimes.getMzMap(referenceRetentionTimes.referenceMz);
                 
         
         /* First pass populates retention time intervals for each peptide+m/z
@@ -259,80 +266,90 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
                 Peptide peptide = pr.getPeptide(peptideSequence);
                 PeptideResult pepResult = pr.getPeptideResult(peptide);
                      
-                /* To compute the ratio of labeled to unlabeld peptide abundance
-                 * we must detect an unlabeled species of the peptide in at 
-                 * least on spectrum (it will be interpolated across the 
-                 * others). Set this to false, and it will be set to true if
-                 * at least one unlabeled species was identified.*/
+                /* We cache wether a peptide was detected in both a labeled and
+                 * unlabeld form, and the cached boolean is originally set to
+                 * false for both cases*/
                 if(!hasUnlabeled.containsKey(peptideSequence))
                             hasUnlabeled.put(peptideSequence, Boolean.FALSE);
                 if(!hasLabeled.containsKey(peptideSequence))
                             hasLabeled.put(peptideSequence, Boolean.FALSE);
                 
-                for(String exposureTime : pepResult.getSpectrumKeys()) {
-                    SpectrumResult sr = pepResult.getSpectrumResult(exposureTime);
-                    exposureTimes.add(exposureTime);
+                /* Iterate over each spectrum file represented in the result */
+                for(String spectrumKey : pepResult.getSpectrumKeys()) {
+                    SpectrumResult spectrumResult = pepResult.getSpectrumResult(spectrumKey);
+                    spectrumKeys.add(spectrumKey);
 
                     /* If any identifications were made in this spectrum, 
                      * allocate the necessary data structures to aggregate the
                      * results */
-                    if(!sr.getLabeledKeys().isEmpty() || !sr.getUnlabeledKeys().isEmpty()) {
+                    if(!spectrumResult.getLabeledKeys().isEmpty() || !spectrumResult.getUnlabeledKeys().isEmpty()) {
                         peptideSequences.add(peptideSequence);
+                        /* Check one hash for the sequence, as it is either 
+                         * present or absent in all of them */
                         if(!chargeStates.containsKey(peptideSequence)) {
-                            chargeStates.put(peptideSequence, new HashMap<>());
+                           chargeStates.put(peptideSequence, new HashMap<>());
+                           massOffsets.put(peptideSequence, new HashMap<>());
+                           monoIsotpoicMasses.put(peptideSequence, new HashSet<>());
+                           peptideRetentionTimes.put(peptideSequence, new RetentionTimes());
+                           labelingMz.put(peptideSequence, new HashMap<>());
                         }
-                        if(!massOffsets.containsKey(peptideSequence)) {
-                            massOffsets.put(peptideSequence, new HashMap<>());
-                        }
-                        if(!monoIsotpoicMasses.containsKey(peptideSequence)) {
-                            monoIsotpoicMasses.put(peptideSequence, new HashSet<>());
-                        }
-                        if(!retentionTimeIntervals.containsKey(peptideSequence)) {
-                            retentionTimeIntervals.put(peptideSequence, new RetentionTimes());
-                        }
-
-                        if(!labelingMz.containsKey(peptideSequence))
-                            labelingMz.put(peptideSequence, new HashMap<>());
                     }
 
-                    /* If there is at least one unlabeled species identified,
-                     * it can be used for computing ratios of labaled/unlabeled
-                     * peptide abundance. */
-                    if(!sr.getUnlabeledKeys().isEmpty())
+                    /* Update the peptide level booleans for (un)labeled 
+                     * identification if either were detected in this spectrum
+                     */
+                    if(!spectrumResult.getUnlabeledKeys().isEmpty())
                         hasUnlabeled.put(peptideSequence,Boolean.TRUE);
-                    if(!sr.getLabeledKeys().isEmpty())
+                    if(!spectrumResult.getLabeledKeys().isEmpty())
                         hasLabeled.put(peptideSequence,Boolean.TRUE);
                     
-                    for(String miKey : sr.getUnlabeledKeys()) {
+                    /* Iterate over the mono-isotopic masses of identifications
+                     * made for this peptide */
+                    for(String miKey : spectrumResult.getUnlabeledKeys()) {
+                        /* Allocate data structures for charge state and mass
+                         * offset (mass of any associated modification) */
                         if(!chargeStates.get(peptideSequence).containsKey(miKey))
                             chargeStates.get(peptideSequence).put(miKey,new HashSet<>());
-                        
                         if(!massOffsets.get(peptideSequence).containsKey(miKey))
                             massOffsets.get(peptideSequence).put(miKey,new HashSet<>());
                         
-                        for(Identification identification : sr.getUnlabeledIdentification(miKey)) {
+                        /* Iterate over the identifications made of unlabeled
+                         * forms of the peptide */
+                        for(Identification identification : spectrumResult.getUnlabeledIdentification(miKey)) {
+                            /* Store a flag that tells us this moniostopic mass
+                             * indicates an unlabeled form of this peptide */
                             labelingMz.get(peptideSequence).put(miKey, false);
+                            
+                            /* Store the monoisotopic mass of the peptide */
                             monoIsotpoicMasses.get(peptideSequence).add(miKey);
+                            
+                            /* Store the charge state corresponding to the 
+                             * identification */
                             chargeStates.get(peptideSequence).get(miKey).add(identification.getCharge());
+                            
+                            /* Store the mass offset of the modification as an
+                             * integer. This is a sanity check, as they should
+                             * all be equal with the exception of possible 
+                             * roundoff error */
                             massOffsets.get(peptideSequence).get(miKey).add(identification.getMassOffset().intValue());
                         }
-                        retentionTimeIntervals.get(peptideSequence).addAll(sr.getUnlabeledIdentification(miKey));
+                        peptideRetentionTimes.get(peptideSequence).addAll(spectrumResult.getUnlabeledIdentification(miKey));
                     }
 
-                    for(String miKey : sr.getLabeledKeys()) {
+                    for(String miKey : spectrumResult.getLabeledKeys()) {
                         if(!chargeStates.get(peptideSequence).containsKey(miKey))
                             chargeStates.get(peptideSequence).put(miKey,new HashSet<>());
                         
                         if(!massOffsets.get(peptideSequence).containsKey(miKey))
                             massOffsets.get(peptideSequence).put(miKey,new HashSet<>());
                         
-                        for(Identification identification : sr.getLabeledIdentification(miKey)) {
+                        for(Identification identification : spectrumResult.getLabeledIdentification(miKey)) {
                             labelingMz.get(peptideSequence).put(miKey, true);
                             monoIsotpoicMasses.get(peptideSequence).add(miKey);
                             chargeStates.get(peptideSequence).get(miKey).add(identification.getCharge());
                             massOffsets.get(peptideSequence).get(miKey).add(identification.getMassOffset().intValue());
                         }
-                        retentionTimeIntervals.get(peptideSequence).addAll(sr.getLabeledIdentification(miKey));
+                        peptideRetentionTimes.get(peptideSequence).addAll(spectrumResult.getLabeledIdentification(miKey));
                     }
 
                 } 
@@ -352,7 +369,7 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
          * miKey[] where the cell value is retention time. This defines a 
          * retention time in every spectrum for each peptide+m/z values that was
          * identified in at least one spectra */
-        RetentionTimeDatabase rtp = new RetentionTimeDatabase();
+        RetentionTimeDatabase retentionTimeDatabase = new RetentionTimeDatabase();
         for(String peptideSequence : peptideSequences) {
         
             /* Do not include peptides where no unlabeled species were 
@@ -362,12 +379,12 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
                 continue;
             }
         
-            for(String exposureTime : exposureTimes) {
+            for(String spectrumKey : spectrumKeys) {
                 for(String monoIsotopicMassStr : monoIsotpoicMasses.get(peptideSequence)) {
                     /* Lookup retention time by mono isotopic mass. This 
                      * is a pool of retention times shared across all 
                      * detected charges states of this peptide species */
-                    List<ComparableRetentionTime> retentionTimes = this.getRetentionTime(exposureTime, monoIsotopicMassStr, referenceRt, retentionTimeIntervals.get(peptideSequence));
+                    List<ComparableRetentionTime> expandedRetentionTimes = this.getRetentionTime(spectrumKey, monoIsotopicMassStr, referenceRt, peptideRetentionTimes.get(peptideSequence));
                     Double monoIsotopicMass = Double.parseDouble(monoIsotopicMassStr);
                     
                     /* Verify that the mass offsets are all equal */
@@ -384,13 +401,13 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
                         String mzKey = String.format("%.4f",mz);
                         
                         /* Add best retention time to output map */
-                        rtp.addRetentionTime(peptideSequence, exposureTime, mzKey, retentionTimes, labelingMz.get(peptideSequence).get(monoIsotopicMassStr), z, miMassOffsets.iterator().next());
+                        retentionTimeDatabase.addRetentionTime(peptideSequence, spectrumKey, mzKey, expandedRetentionTimes, labelingMz.get(peptideSequence).get(monoIsotopicMassStr), z, miMassOffsets.iterator().next());
                     }
                 }
             }
         }
         
-        return rtp;
+        return retentionTimeDatabase;
     }
     
     

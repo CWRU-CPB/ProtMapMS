@@ -49,15 +49,15 @@ public class RetentionTimes extends HashMap<String,HashMap<String,List<Comparabl
         Integer z = identification.getCharge();
         Double mz = identification.getPrecursorMz();
         Double mie = (mz*z)-(z*Constants.MASS_HYDROGEN);
-        String mzKey = String.format("%.6f",mie);
+        String miKey = String.format("%.6f",mie);
 
-        if(!this.get(expKey).containsKey(mzKey)) {
-            this.get(expKey).put(mzKey, new ArrayList<>());
+        if(!this.get(expKey).containsKey(miKey)) {
+            this.get(expKey).put(miKey, new ArrayList<>());
         }
         
         ComparableRetentionTime rt = new ComparableRetentionTime(identification);
-        if(!this.get(expKey).get(mzKey).contains(rt))
-            this.get(expKey).get(mzKey).add(new ComparableRetentionTime(identification));
+        if(!this.get(expKey).get(miKey).contains(rt))
+            this.get(expKey).get(miKey).add(new ComparableRetentionTime(identification));
     }
     
     public void addAll(List<Identification> identifications) {

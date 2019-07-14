@@ -263,12 +263,13 @@ public class IdentificationFactory {
          * medians of 20 partitions of the scan peaks */
         peaks = peakFilterChain.filter(peaks, precursors, ms2Err);
         
-        /* Align the filtered peaks to the theoretical spectrum. The peaks
-         * are in */
+        /* Align the filtered peaks to the theoretical spectrum */
         ArrayAlignment peakAlignment = SortedArraysAligner.alignClosestDependent(peaks.MZ, peaks.Intensity, theoreticalIons, ms2Err);
         LOGGER.trace("{} theoretical peaks aligned to {} of {} observed peaks",theoreticalIons.length,peakAlignment.count,peaks.MZ.length);
         LOGGER.trace(peakAlignment.toString());
         
+        /* Compute a Pearson correlation score between the theoretical and
+         * observed peak vectors */
         Score s = scoringFunction.score(peakAlignment.theoreticalIntensities, peakAlignment.observedIntensities);
         LOGGER.trace("Score for peptide {} in scan {} is {}",peptide.sequence,scan,s.score);
         
@@ -337,15 +338,16 @@ public class IdentificationFactory {
     }
             
     public FootprintingResult identify() throws Exception {
-        /* Validate all parameters have been configured */
+        /* Validate all parameters have been configured, and print config for
+         * informational purposes */
         validate();
         printConfig();
         
         /* Instantiate result container to hold results */
         FootprintingResult result = new FootprintingResult();
         
-        /* Iterate over spectrum files. This is the outer most loop but 
-         * connecting to a spectrum has the longest delay of any operation */
+        /* Iterate over spectrum files. This is the outer most loop because
+         * connecting to a spectrum is the highest cost operation */
         for(int spectrumIndex=0;spectrumIndex<spectrumFiles.size();spectrumIndex++) {
             /* Prepare to process next spectrum file */
             String file = spectrumFiles.get(spectrumIndex);
@@ -425,21 +427,32 @@ public class IdentificationFactory {
             }
         }
         
+        /* Try to find an unlabeled form of a peptide that was identified in the
+         * most spectrum files. Ideally, it will have been detected in all of 
+         * them */
         System.out.printf("----Reference-----\n");
         RetentionTimes referenceRetentionTimes = result.getReferenceRetentionTimeIntervals();
         referenceRetentionTimes.print();
         
-        //System.out.printf("----Interpolated Pool----\n");
+        /* Use the reference retention times to extrapolate missing retention
+         * times of other peptides */
+        System.out.printf("----Extrapolate Retention Times----\n");
         RetentionTimeDatabase rtp = result.getRetentionTimeDatabase(referenceRetentionTimes);
         rtp.print();
         
+        /* Certain situations can arise where two or more peptides have the
+         * same m/z value. As they will share the same MS1 chromatogram, we need
+         * only extract one for eah unique m/z value. The RetentionTimeDatabase
+         * class exposes the method uses below to export a list of unique m/z
+         * values and associated charges to avoid processing redundant m/z 
+         * chromatogram extractions */
         System.out.printf("----MS1 Extract----\n");
         double[][] mzAndCharge = rtp.getUniqueSpeciesPropertiesForMS1Extraction();
         MS1ExtractWithGaussianConfirmation ms1e = new MS1ExtractWithGaussianConfirmation(
-                mzAndCharge[0],
-                mzAndCharge[1],
+                mzAndCharge[0], // m/z value
+                mzAndCharge[1], // charge
                 ms1ErrPpm,
-                60000,
+                60000, // corresponds to high resolution instrument
                 fromRT,
                 toRT,
                 spectrumFiles,
