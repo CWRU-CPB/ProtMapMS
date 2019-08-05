@@ -466,7 +466,7 @@ public class IdentificationFactory {
         
         /* Output result objects */
         ResultWriter.writePeakAreasJSON(outDir, result, rtp, ms1e, integrationSlack);
-        ResultWriter.writeChromatogramsJSON(outDir, ms1e, rtp);
+        ResultWriter.writeChromatogramsJSON(outDir, ms1e);
         ResultWriter.writeIdentificationsJSON(outDir,result);
         
         return result;

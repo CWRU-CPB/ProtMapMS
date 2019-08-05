@@ -206,11 +206,13 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
     
     /**
      * Returns the retention time intervals over which a mono-isotopic mass was 
-     * identified in all spectra. Interpolates the retention time based on the 
-     * best identification made in a different spectrum relative to a
-     * "reference" retention time. This has no affect when the spectrum in
-     * the request matches the spectrum where the identification was made,
-     * i.e., the interpolated distance adjustment has magnitude 0.
+     * identified in all spectra, mapped into the spectrum of interest
+     * using a reference retention time as a landmark. Extrapolates the 
+     * retention times based on the their relative distance from the reference
+     * retention time in one spectrum versus the spectrum of interest.
+     * This has no affect when the spectrum in the request matches the spectrum 
+     * where the identification was made, i.e., the extrapolation adjustment has
+     * magnitude 0.
      * 
      * @param spectrumKey The spectrum key for the spectrum under consideration
      * @param mzKey The m/z value key of the peptide species under consideration
@@ -358,11 +360,11 @@ public class FootprintingResult extends HashMap<String,ProteinResult> {
             
         }
         
-        /* The second pass uses the reference retention time to interpolate 
+        /* The second pass uses the reference retention time to extrapolate 
          * retention times for peptide+m/z values in spectra where they
-         * were not detected using the difference between the reference 
-         * retention time and the peptide+m/z retention time in a spectrum
-         * where it was detected.
+         * were identified to all other spectra using the difference between 
+         * the reference retention time and the peptide+m/z retention time in 
+         * the spectrum where it was detected.
          *
          * Iterates over every cell of the 4-dimensional hypercube defined by 4-tuples
          * drawn from peptideSequence[], exposureTime[], chargeStates[] and 

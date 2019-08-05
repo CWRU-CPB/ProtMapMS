@@ -79,14 +79,44 @@ public class IdentificationFactoryConfig {
         return this;
     }
     
+    public IdentificationFactoryConfig setChargeMin(Integer min) {
+        minZ=min;
+        return this;
+    }
+    
+    public IdentificationFactoryConfig setChargeMax(Integer max) {
+        maxZ=max;
+        return this;
+    }
+    
     public IdentificationFactoryConfig setMassRange(Double min, Double max) {
         minMass=min;
         maxMass=max;
         return this;
     }
     
+    public IdentificationFactoryConfig setMassMin(Double min) {
+        minMass=min;
+        return this;
+    }
+    
+    public IdentificationFactoryConfig setMassMax(Double max) {
+        maxMass=max;
+        return this;
+    }
+    
     public IdentificationFactoryConfig setRTRange(Double min, Double max) {
         fromRT=min;
+        toRT=max;
+        return this;
+    }
+    
+    public IdentificationFactoryConfig setRTMin(Double min) {
+        fromRT=min;
+        return this;
+    }
+    
+    public IdentificationFactoryConfig setRTMax(Double max) {
         toRT=max;
         return this;
     }

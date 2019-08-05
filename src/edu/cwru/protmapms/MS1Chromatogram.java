@@ -148,6 +148,20 @@ public class MS1Chromatogram implements Comparable<MS1Chromatogram> {
         return f3;
     }
     
+    /**
+     * Generates a JSON formatted map containing the chromatogram data. The map
+     * contains key,value pairs:
+     * <ul>
+     * <li>key: the m/z value that this chromatogram corresponds to</li>
+     * <li>maxInt: Maximum intensity value (y value) in the chromatogram</li>
+     * <li>int: array of intensity values (y values)</li>
+     * <li>rt: array of retention time values (x values)</li>
+     * </ul>
+     * <br>
+     * The int array is filtered to suppress runs of zeros between the first and
+     * last data point extracted.
+     * @return 
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{");
