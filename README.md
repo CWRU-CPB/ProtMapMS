@@ -31,10 +31,10 @@ OPTIONS:
 		the argument value. Default value is 4.
 
 	--max-missed-cleavages <int>
-	Only consider peptides with this less than or equal to this
+		Only consider peptides with this less than or equal to this
 		many missed cleavages. Default value is 1.
 
-        --max-mods <int>
+	--max-mods <int>
 		Only consider peptides with less than or equal to this many
 		concurrent modifications. Default value is 2.
 
@@ -49,21 +49,21 @@ OPTIONS:
 		Only consider peptides with monoisotopic mass greater than
 		or equal to this molecular weight. Default value is 500.0.
 
-        --max-mass <double>
+	--max-mass <double>
 		Only consider peptides with monoisotopic mass less than or
 		equal to this molecular weight. Default value is 4000.0.
 
-        --from-retention-time <double>
+	--from-retention-time <double>
 		Only search for peptides that elute at greater than or 
 		equal to this time (specified in minutes). Default value
 		is 20.0.
 
-        --to-retention-time <double>
+	--to-retention-time <double>
 		Only search for peptides that elute at less than or 
 		equal to this time (specified in minutes). Default value
 		is 170.0.
 
-        --ms1-error-ppm <int>
+	--ms1-error-ppm <int>
 		When identifying candidate scans for MS2 confirmation,
 		this parameter specifies how far from the theoretical
 		precursor m/z value we will match an experimental precursor
