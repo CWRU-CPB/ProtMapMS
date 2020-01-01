@@ -29,5 +29,5 @@ package edu.cwru.protmapms;
  * @author sean-m
  */
 public class Utilities {
-    
+
 }
