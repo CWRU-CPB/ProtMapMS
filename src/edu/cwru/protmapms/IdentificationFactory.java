@@ -257,6 +257,12 @@ public class IdentificationFactory {
         Peaks peaks = sf.getScanPeaks(scan);
         Scan scanMeta = sf.getScanProperties(scan);
         
+        /* Strange edge case where MS2 scan has a precursor ion, but no 
+         * m/z intensity data */
+        if(peaks.MZ.length == 0) {
+            return null;
+        }
+        
         /* Apply configured peak filtering chain. By default, this removes
          * precursor ions from the scan and applies a noise-modeling filter to
          * remove scan peaks below a linear interpolated cuttoff between the
@@ -362,7 +368,7 @@ public class IdentificationFactory {
             /* Iterate over proteins */
             for(String accession : proteins.getAccessions()) {
                 String sequence = proteins.getSequence(accession);
-                LOGGER.trace("Processing protein {}",accession);
+                LOGGER.info("Processing protein {}",accession);
 
                 /* Create a peptide factory to cleave the protein sequence to 
                  * peptides */
@@ -371,12 +377,12 @@ public class IdentificationFactory {
                 pf.setMissedCleavages(maxMissedCleavages);
                 pf.setSequence(sequence);
                 pf.start();
-
+                
                 /* Iterate over cleaved peptides */
                 List<Peptide> peptides = pf.getNext();
                 while(peptides != null) {
                     for(Peptide peptide : peptides) {
-                        LOGGER.trace("Processing peptide {}",peptide.sequence());
+                        LOGGER.info("Processing peptide {}",peptide.sequence());
 
                         /* Map modifications to peptide residues */
                         ModificationSiteEnumerator mse = new ModificationSiteEnumerator(peptide,modifications,maxConcurrentModifications);
