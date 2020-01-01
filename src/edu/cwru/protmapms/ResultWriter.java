@@ -65,7 +65,10 @@ public class ResultWriter {
         if(!outDirFile.exists())
             outDirFile.mkdirs();
         
-        FileWriter fw = new FileWriter(outDir+"/identifications.tdv");
+        String[] parts = outDir.split("/");
+        String fileName = parts[parts.length-1];
+        
+        FileWriter fw = new FileWriter(outDir+"/"+fileName+"-identifications.tdv");
         fw.write("Accession\tPeptideSequence\tPeptideStart\tPeptideEnd\tSpectrumKey\tm/z\tZ\tRT\tScan\tScore\tModifications\tLabeling?\n");
         for(String accession : result.getProteinAccessions()) {
             ProteinResult protResult = result.getProteinResult(accession);
@@ -229,7 +232,10 @@ public class ResultWriter {
         if(!outDirFile.exists())
             outDirFile.mkdirs();
         
-        FileWriter fw = new FileWriter(outDir+"/peak-areas.tdv");
+        String[] parts = outDir.split("/");
+        String fileName = parts[parts.length-1];
+        
+        FileWriter fw = new FileWriter(outDir+"/"+fileName+"-peak-areas.tdv");
         fw.write("Accession\tPeptide\tPeptideStart\tPeptideEnd\tSpectrumKey\tLabeled Area\tUnlabeled Area\t%Labeled\tR_1/0\n");
         for(String accession : result.getProteinAccessions()) {
             ProteinResult protResult = result.getProteinResult(accession);
